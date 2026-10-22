@@ -9,10 +9,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Types;
+import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @WebServlet("/home")
 public class HomeServlet extends HttpServlet {
@@ -30,24 +35,20 @@ public class HomeServlet extends HttpServlet {
         String username = (String) session.getAttribute("username");
 
         try (Connection conn = DatabaseManager.getConnection()) {
-            String sql = "SELECT * FROM grades WHERE username = ?";
+            String sql = "SELECT test_date FROM driving_checks WHERE username = ? ORDER BY check_time DESC LIMIT 1";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                request.setAttribute("g11_exam", rs.getObject("g11_exam"));
-                request.setAttribute("g11_magen", rs.getObject("g11_magen"));
-                request.setAttribute("g11_war", rs.getBoolean("g11_war"));
-
-                request.setAttribute("g12_exam", rs.getObject("g12_exam"));
-                request.setAttribute("g12_magen", rs.getObject("g12_magen"));
-                request.setAttribute("g12_war", rs.getBoolean("g12_war"));
+                LocalDate testDate = rs.getDate("test_date").toLocalDate();
+                calculateAndSetAttributes(request, testDate);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        loadHistory(request, username);
         request.getRequestDispatcher("/WEB-INF/views/home.jsp").forward(request, response);
     }
 
@@ -64,84 +65,113 @@ public class HomeServlet extends HttpServlet {
         }
 
         String username = (String) session.getAttribute("username");
+        String testDateStr = request.getParameter("test_date");
 
-        String g11ExamStr = request.getParameter("g11_exam");
-        String g11MagenStr = request.getParameter("g11_magen");
-        boolean g11War = "true".equals(request.getParameter("g11_war"));
+        if (testDateStr != null && !testDateStr.trim().isEmpty()) {
+            try {
+                LocalDate testDate = LocalDate.parse(testDateStr);
 
-        String g12ExamStr = request.getParameter("g12_exam");
-        String g12MagenStr = request.getParameter("g12_magen");
-        boolean g12War = "true".equals(request.getParameter("g12_war"));
+                if (testDate.isAfter(LocalDate.now())) {
+                    request.setAttribute("error", "תאריך מעבר הטסט אינו יכול להיות תאריך עתידי.");
+                } else {
+                    try (Connection conn = DatabaseManager.getConnection()) {
+                        String insertSql = "INSERT INTO driving_checks (username, test_date) VALUES (?, ?)";
+                        PreparedStatement ps = conn.prepareStatement(insertSql);
+                        ps.setString(1, username);
+                        ps.setDate(2, Date.valueOf(testDate));
+                        ps.executeUpdate();
+                    }
 
-        Double g11Final = null;
-        Double g12Final = null;
-        Double totalFinal = null;
-
-        if (g11ExamStr != null && !g11ExamStr.isEmpty() && g11MagenStr != null && !g11MagenStr.isEmpty()) {
-            int exam = Integer.parseInt(g11ExamStr);
-            int magen = Integer.parseInt(g11MagenStr);
-
-            if (g11War) {
-                int max = Math.max(exam, magen);
-                int min = Math.min(exam, magen);
-                g11Final = (max * 0.60) + (min * 0.40);
-            } else {
-                g11Final = (exam * 0.50) + (magen * 0.50);
+                    calculateAndSetAttributes(request, testDate);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("error", "פורמט תאריך לא תקין.");
             }
         }
 
-        if (g12ExamStr != null && !g12ExamStr.isEmpty() && g12MagenStr != null && !g12MagenStr.isEmpty()) {
-            int exam = Integer.parseInt(g12ExamStr);
-            int magen = Integer.parseInt(g12MagenStr);
+        loadHistory(request, username);
+        request.getRequestDispatcher("/WEB-INF/views/home.jsp").forward(request, response);
+    }
 
-            if (g12War) {
-                int max = Math.max(exam, magen);
-                int min = Math.min(exam, magen);
-                g12Final = (max * 0.60) + (min * 0.40);
-            } else {
-                g12Final = (exam * 0.50) + (magen * 0.50);
-            }
+    private void calculateAndSetAttributes(HttpServletRequest request, LocalDate testDate) {
+        LocalDate today = LocalDate.now();
+
+        LocalDate dayEscortEnd = testDate.plusMonths(3);
+        LocalDate nightEscortEnd = testDate.plusMonths(6);
+        LocalDate youngDriverEnd = testDate.plusYears(2);
+
+        request.setAttribute("testDate", testDate);
+
+        request.setAttribute("dayEscortEnd", dayEscortEnd);
+        request.setAttribute("dayEscortRemaining", formatRemainingTime(today, dayEscortEnd));
+
+        request.setAttribute("nightEscortEnd", nightEscortEnd);
+        request.setAttribute("nightEscortRemaining", formatRemainingTime(today, nightEscortEnd));
+
+        request.setAttribute("youngDriverEnd", youngDriverEnd);
+        request.setAttribute("youngDriverRemaining", formatRemainingTime(today, youngDriverEnd));
+    }
+
+    private String formatRemainingTime(LocalDate today, LocalDate targetDate) {
+        if (!today.isBefore(targetDate)) {
+            return "הסתיימה התקופה 🎉";
         }
 
-        if (g11Final != null && g12Final != null) {
-            totalFinal = (g11Final * 0.65) + (g12Final * 0.35);
+        Period period = Period.between(today, targetDate);
+        long totalDays = ChronoUnit.DAYS.between(today, targetDate);
+
+        if (totalDays <= 30) {
+            return "נותרו עוד " + totalDays + " ימים";
         }
 
+        StringBuilder sb = new StringBuilder("נותרו עוד ");
+        if (period.getYears() > 0) {
+            sb.append(period.getYears()).append(" שנים ");
+        }
+        if (period.getMonths() > 0) {
+            if (period.getYears() > 0) sb.append("ו-");
+            sb.append(period.getMonths()).append(" חודשים ");
+        }
+        if (period.getDays() > 0) {
+            sb.append("ו-").append(period.getDays()).append(" ימים");
+        }
+
+        return sb.toString().trim();
+    }
+
+    private void loadHistory(HttpServletRequest request, String username) {
+        List<Map<String, String>> history = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection()) {
-            String deleteSql = "DELETE FROM grades WHERE username = ?";
-            PreparedStatement deletePs = conn.prepareStatement(deleteSql);
-            deletePs.setString(1, username);
-            deletePs.executeUpdate();
-
-            String insertSql = "INSERT INTO grades (username, g11_exam, g11_magen, g11_war, g11_final, g12_exam, g12_magen, g12_war, g12_final, total_final) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement ps = conn.prepareStatement(insertSql);
-
+            String sql = "SELECT test_date, check_time FROM driving_checks " +
+                    "WHERE username = ? ORDER BY check_time DESC LIMIT 10";
+            PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
 
-            if (g11ExamStr != null && !g11ExamStr.isEmpty()) ps.setInt(2, Integer.parseInt(g11ExamStr));
-            else ps.setNull(2, Types.INTEGER);
-            if (g11MagenStr != null && !g11MagenStr.isEmpty()) ps.setInt(3, Integer.parseInt(g11MagenStr));
-            else ps.setNull(3, Types.INTEGER);
-            ps.setBoolean(4, g11War);
-            if (g11Final != null) ps.setDouble(5, g11Final);
-            else ps.setNull(5, Types.DOUBLE);
+            while (rs.next()) {
+                Map<String, String> item = new HashMap<>();
+                Date testDate = rs.getDate("test_date");
+                Timestamp checkTime = rs.getTimestamp("check_time");
 
-            if (g12ExamStr != null && !g12ExamStr.isEmpty()) ps.setInt(6, Integer.parseInt(g12ExamStr));
-            else ps.setNull(6, Types.INTEGER);
-            if (g12MagenStr != null && !g12MagenStr.isEmpty()) ps.setInt(7, Integer.parseInt(g12MagenStr));
-            else ps.setNull(7, Types.INTEGER);
-            ps.setBoolean(8, g12War);
-            if (g12Final != null) ps.setDouble(9, g12Final);
-            else ps.setNull(9, Types.DOUBLE);
-
-            if (totalFinal != null) ps.setDouble(10, totalFinal);
-            else ps.setNull(10, Types.DOUBLE);
-
-            ps.executeUpdate();
+                item.put("testDate", testDate.toString());
+                item.put("timeAgo", formatTimeAgo(checkTime.toLocalDateTime()));
+                history.add(item);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        request.setAttribute("history", history);
+    }
 
-        response.sendRedirect(request.getContextPath() + "/results");
+    private String formatTimeAgo(LocalDateTime checkTime) {
+        LocalDateTime now = LocalDateTime.now();
+        long minutes = ChronoUnit.MINUTES.between(checkTime, now);
+        if (minutes < 1) return "ממש עכשיו";
+        if (minutes < 60) return "לפני " + minutes + " דק'";
+        long hours = ChronoUnit.HOURS.between(checkTime, now);
+        if (hours < 24) return "לפני " + hours + " שעות";
+        long days = ChronoUnit.DAYS.between(checkTime, now);
+        return "לפני " + days + " ימים";
     }
 }

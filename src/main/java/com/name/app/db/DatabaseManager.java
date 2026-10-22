@@ -32,12 +32,12 @@ public class DatabaseManager {
                 "password VARCHAR(50) NOT NULL" +
                 ");";
 
-        String createGradesTable = "CREATE TABLE IF NOT EXISTS grades (" +
+        // טבלה חדשה להיסטוריית בדיקות הנהיגה
+        String createDrivingChecksTable = "CREATE TABLE IF NOT EXISTS driving_checks (" +
                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                "username VARCHAR(50) UNIQUE NOT NULL, " +
-                "g11_exam INT, g11_magen INT, g11_war BOOLEAN, g11_final DOUBLE, " +
-                "g12_exam INT, g12_magen INT, g12_war BOOLEAN, g12_final DOUBLE, " +
-                "total_final DOUBLE, " +
+                "username VARCHAR(50) NOT NULL, " +
+                "test_date DATE NOT NULL, " +
+                "check_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE" +
                 ");";
 
@@ -45,16 +45,10 @@ public class DatabaseManager {
              Statement stmt = conn.createStatement()) {
 
             stmt.execute(createUsersTable);
-            stmt.execute(createGradesTable);
+            stmt.execute(createDrivingChecksTable);
 
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
-        try (Connection conn = DatabaseManager.getConnection()) {
-            System.out.println("Connection to H2 successful and tables initialized!");
         }
     }
 }
