@@ -1,7 +1,5 @@
 package com.name.app;
 
-import com.name.app.db.DatabaseManager;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -20,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @WebServlet("/results")
-public class ResultsServlet extends HttpServlet {
+public class CalculationController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -79,13 +77,13 @@ public class ResultsServlet extends HttpServlet {
 
         if ("day".equals(type)) {
             targetDate = testDate.plusMonths(3);
-            title = "תקופת מלווה יום ולילה";
+            title = "תקופת מלווה יום";
         } else if ("night".equals(type)) {
             targetDate = testDate.plusMonths(6);
             title = "תקופת מלווה לילה בלבד";
         } else {
             targetDate = testDate.plusYears(2);
-            title = "תקופת נהג חדש (שנתיים)";
+            title = "תקופת נהג חדש";
         }
 
         request.setAttribute("title", title);
@@ -100,7 +98,7 @@ public class ResultsServlet extends HttpServlet {
                 request.setAttribute("badgeText", "אין צורך במלווה");
                 request.setAttribute("isSpecialStatus", true);
             } else if (isOver24) {
-                request.setAttribute("statusMessage", "אין צורך במלווה! נוהגים מעל גיל 24 פטורים מחובת מלווה לפי חוק.");
+                request.setAttribute("statusMessage", "אין צורך במלווה! נהגים מעל גיל 24 פטורים ממלווה.");
                 request.setAttribute("badgeText", "אין צורך במלווה");
                 request.setAttribute("isSpecialStatus", true);
             } else {
@@ -119,7 +117,7 @@ public class ResultsServlet extends HttpServlet {
         }
 
         loadHistory(request, username);
-        request.getRequestDispatcher("/WEB-INF/views/results.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/calculation.jsp").forward(request, response);
     }
 
     private String formatRemainingTime(LocalDate today, LocalDate targetDate) {

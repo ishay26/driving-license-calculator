@@ -1,6 +1,4 @@
-package com.name.app.auth;
-
-import com.name.app.db.DatabaseManager;
+package com.name.app;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -16,7 +14,7 @@ import java.sql.ResultSet;
 import java.time.LocalDate;
 
 @WebServlet("/profile")
-public class ProfileServlet extends HttpServlet {
+public class ProfileController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

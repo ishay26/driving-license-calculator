@@ -198,7 +198,7 @@
 <div class="container">
     <div class="card">
         <div class="card-header">
-            <h2>חישוב תוקף ליווי ונהג חדש</h2>
+            <h2>חישוב סוף מלווה ונהג חדש</h2>
             <p>הזן תאריך ובחר בדיקה מתאימה:</p>
         </div>
 
@@ -216,7 +216,7 @@
             <div class="btn-grid">
                 <button type="submit" name="type" value="day" class="btn-action">
                     <i class="fa-solid fa-sun"></i>
-                    <span>מלווה יום ולילה</span>
+                    <span>מלווה יום</span>
                 </button>
                 <button type="submit" name="type" value="night" class="btn-action">
                     <i class="fa-solid fa-moon"></i>

@@ -1,7 +1,5 @@
 package com.name.app;
 
-import com.name.app.db.DatabaseManager;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -20,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @WebServlet("/home")
-public class HomeServlet extends HttpServlet {
+public class HomeController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

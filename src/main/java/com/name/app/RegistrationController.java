@@ -1,6 +1,4 @@
-package com.name.app.auth;
-
-import com.name.app.db.DatabaseManager;
+package com.name.app;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -15,7 +13,7 @@ import java.sql.PreparedStatement;
 import java.time.LocalDate;
 
 @WebServlet("/register")
-public class RegisterServlet extends HttpServlet {
+public class RegistrationController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

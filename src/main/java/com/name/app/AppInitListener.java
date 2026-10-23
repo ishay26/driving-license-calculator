@@ -1,4 +1,4 @@
-package com.name.app.db;
+package com.name.app;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
