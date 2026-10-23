@@ -19,6 +19,7 @@ public class LoginController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
         String username = request.getParameter("username");
 
         // כאן אמורה להיות בדיקת סיסמה מול מסד הנתונים
