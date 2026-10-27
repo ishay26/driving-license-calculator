@@ -48,7 +48,7 @@ public class CalculationController extends HttpServlet {
         LocalDate today = LocalDate.now();
 
         boolean isOver24 = false;
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseController.getConnection()) {
             String userSql = "SELECT birth_date FROM users WHERE username = ?";
             PreparedStatement userPs = conn.prepareStatement(userSql);
             userPs.setString(1, username);
@@ -141,7 +141,7 @@ public class CalculationController extends HttpServlet {
 
     private void loadHistory(HttpServletRequest request, String username) {
         List<Map<String, String>> history = new ArrayList<>();
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseController.getConnection()) {
             String sql = "SELECT test_date, check_time FROM driving_checks WHERE username = ? ORDER BY check_time DESC LIMIT 10";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, username);

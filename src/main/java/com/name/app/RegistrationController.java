@@ -46,7 +46,7 @@ public class RegistrationController extends HttpServlet {
             return;
         }
 
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseController.getConnection()) {
             String sql = "INSERT INTO users (username, password, birth_date) VALUES (?, ?, ?)";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, username.trim());

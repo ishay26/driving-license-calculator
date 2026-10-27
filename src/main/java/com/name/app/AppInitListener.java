@@ -11,7 +11,7 @@ public class AppInitListener implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        try (Connection conn = DatabaseManager.getConnection();
+        try (Connection conn = DatabaseController.getConnection();
              Statement stmt = conn.createStatement()) {
 
             // יצירת טבלת משתמשים הכוללת תאריך לידה

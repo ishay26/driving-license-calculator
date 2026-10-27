@@ -28,7 +28,7 @@ public class ProfileController extends HttpServlet {
 
         String username = (String) session.getAttribute("username");
 
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseController.getConnection()) {
             String sql = "SELECT username, password, birth_date FROM users WHERE username = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, username);
@@ -71,7 +71,7 @@ public class ProfileController extends HttpServlet {
             return;
         }
 
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseController.getConnection()) {
             String sql = "UPDATE users SET username = ?, password = ?, birth_date = ? WHERE username = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, newUsername.trim());

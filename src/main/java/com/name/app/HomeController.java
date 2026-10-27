@@ -32,7 +32,7 @@ public class HomeController extends HttpServlet {
 
         String username = (String) session.getAttribute("username");
 
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseController.getConnection()) {
             String sql = "SELECT test_date FROM driving_checks WHERE username = ? ORDER BY check_time DESC LIMIT 1";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, username);
@@ -74,7 +74,7 @@ public class HomeController extends HttpServlet {
                 if (testDate.isAfter(LocalDate.now())) {
                     request.setAttribute("error", "תאריך מעבר הטסט אינו יכול להיות תאריך עתידי.");
                 } else {
-                    try (Connection conn = DatabaseManager.getConnection()) {
+                    try (Connection conn = DatabaseController.getConnection()) {
                         String insertSql = "INSERT INTO driving_checks (username, test_date) VALUES (?, ?)";
                         PreparedStatement ps = conn.prepareStatement(insertSql);
                         ps.setString(1, username);
@@ -142,7 +142,7 @@ public class HomeController extends HttpServlet {
 
     private void loadHistory(HttpServletRequest request, String username) {
         List<Map<String, String>> history = new ArrayList<>();
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseController.getConnection()) {
             String sql = "SELECT test_date, check_time FROM driving_checks " +
                     "WHERE username = ? ORDER BY check_time DESC LIMIT 10";
             PreparedStatement ps = conn.prepareStatement(sql);
